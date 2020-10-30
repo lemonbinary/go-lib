@@ -65,6 +65,7 @@ type TimeFileLogWriter struct {
 
 	interval   int64
 	suffix     string         // suffix of log file
+	ext        string // final suffix
 	fileFilter *regexp.Regexp // for removing old log files
 
 	rolloverAt int64 // time.Unix()
@@ -193,6 +194,7 @@ func NewTimeFileLogWriter(fname string, when string, backupCount int) *TimeFileL
 		format:      "[%D %T] [%L] (%S) %M",
 		when:        when,
 		backupCount: backupCount,
+		ext:         ".old",
 	}
 
 	// add w to collection of all writers
@@ -298,7 +300,7 @@ func (w *TimeFileLogWriter) moveToBackup() error {
 	if err == nil { // file exists
 		// get the time that this sequence started at and make it a TimeTuple
 		t := time.Unix(w.rolloverAt-w.interval, 0).Local()
-		fname := w.baseFilename + "." + strftime.Format(w.suffix, t)
+		fname := w.baseFilename + "." + strftime.Format(w.suffix, t) + w.ext
 
 		// remove the file with fname if exist
 		if _, err := os.Stat(fname); err == nil {
@@ -366,6 +368,11 @@ func (w *TimeFileLogWriter) intRotate() error {
 // message is written.
 func (w *TimeFileLogWriter) SetFormat(format string) *TimeFileLogWriter {
 	w.format = format
+	return w
+}
+
+func (w *TimeFileLogWriter) SetExt(ext string) *TimeFileLogWriter {
+	w.ext = ext
 	return w
 }
 
